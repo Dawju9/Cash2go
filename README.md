@@ -1,0 +1,2 @@
+# Cash2go
+ Cash2go to zaawansowany system oprogramowania dedykowany do obsługi, transferu, zarządzania, generowania oraz analizowania loterii zdrapek. Projekt umożliwia tworzenie i przetwarzanie zdrapek, w tym także zarządzanie zdrapkami jeszcze nie rozstrzygniętymi poprzez zastosowanie technik generowania języka naturalnego (NLG) oraz maskowanie losów, co umożliwia ich wcześniejszy zakup bez ujawniania szczegółów wygranej.
