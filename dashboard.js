@@ -32,7 +32,9 @@ class Dashboard {
     initializeQRScanner() {
         this.qrScanner = new QRScanner("qr-reader", {
             fps: 10,
-            qrbox: 250
+            qrbox: 250,
+            showScanTime: true,
+            scanType: 'scanned-code'
         });
         
         this.qrScanner.start(
@@ -87,6 +89,19 @@ class Dashboard {
                     data: [65, 59, 80, 81, 56, 55],
                     borderColor: '#4CAF50'
                 }]
+            },
+            options: {
+                title: {
+                    display: true,
+                    text: 'Monthly Sales'
+                },
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                }
             }
         });
 
@@ -99,6 +114,12 @@ class Dashboard {
                     data: [70, 25, 5],
                     backgroundColor: ['#FFC107', '#2196F3', '#F44336']
                 }]
+            },
+            options: {
+                title: {
+                    display: true,
+                    text: 'Winnings Distribution'
+                }
             }
         });
     }
