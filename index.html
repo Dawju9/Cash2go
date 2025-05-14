@@ -84,130 +84,130 @@
             <div id="results-list"></div>
         </div>
     </div>
-      <div class="bg-white shadow-lg w-[360px] h-[160px] rounded-sm flex items-center justify-between p-8">
-          <div class="text-gray-600 font-semibold text-lg leading-tight text-left w-28 select-none">
-              ZDRAPKA
-          </div>
-          <div class="scratch-card">
-              <div class="tiles">
-                  <canvas class="tile" width="40" height="40"></canvas>
-                  <canvas class="tile" width="40" height="40"></canvas>
-                  <canvas class="tile" width="40" height="40"></canvas>
-                  <canvas class="tile" width="40" height="40"></canvas>
-                  <canvas class="tile" width="40" height="40"></canvas>
-                  <canvas class="tile" width="40" height="40"></canvas>
-                  <canvas class="tile" width="40" height="40"></canvas>
-                  <canvas class="tile" width="40" height="40"></canvas>
-                  <canvas class="tile" width="40" height="40"></canvas>
-              </div>
-          </div>
-      </div>
-      <script>
-          document.addEventListener('DOMContentLoaded', () => {
-              const tiles = document.querySelectorAll('.tile');
-              const rewards = [0, 0, 0, 5, 10, 20, 50, 100, 500];
-              let scratchedTiles = 0;
-              let totalWinnings = 0;
-              let isGameComplete = false;
+    <div class="bg-white shadow-lg w-[360px] h-[160px] rounded-sm flex items-center justify-between p-8">
+        <div class="scratch-card">
+            <div class="tiles">
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tiles = document.querySelectorAll('.tile');
+            const rewards = [0, 0, 0, 5, 10, 20, 50, 100, 500];
+            let scratchedTiles = 0;
+            let totalWinnings = 0;
+            let isGameComplete = false;
 
-              function shuffleArray(array) {
-                  for (let i = array.length - 1; i > 0; i--) {
-                      const j = Math.floor(Math.random() * (i + 1));
-                      [array[i], array[j]] = [array[j], array[i]];
-                  }
-                  return array;
-              }
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
 
-              const shuffledRewards = shuffleArray([...rewards]);
+            const shuffledRewards = shuffleArray([...rewards]);
 
-              function handleScratch(e, tile, ctx, index) {
-                  if (isGameComplete) return;
-                  const rect = tile.getBoundingClientRect();
-                  const x = (e.clientX || e.touches[0].clientX) - rect.left;
-                  const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            function handleScratch(e, tile, ctx, index) {
+                if (isGameComplete) return;
+                const rect = tile.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
 
-                  ctx.globalCompositeOperation = 'destination-out';
-                  ctx.beginPath();
-                  ctx.arc(x, y, 8, 0, Math.PI * 2);
-                  ctx.fill();
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.fill();
 
-                  return getScrathedPercentage(ctx);
-              }
+                return getScrathedPercentage(ctx);
+            }
 
-              tiles.forEach((tile, index) => {
-                  const ctx = tile.getContext('2d');
-                  let isScratched = false;
+            tiles.forEach((tile, index) => {
+                const ctx = tile.getContext('2d');
+                let isScratched = false;
 
-                  ctx.fillStyle = '#ccc';
-                  ctx.fillRect(0, 0, 40, 40);
+                ctx.fillStyle = '#ccc';
+                ctx.fillRect(0, 0, 40, 40);
 
-                  const scratchHandler = (e) => {
-                      if (!isScratched) {
-                          const scratchedPixels = handleScratch(e, tile, ctx, index);
-                          if (scratchedPixels > 50) {
-                              isScratched = true;
-                              scratchedTiles++;
-                              revealReward(index, ctx);
-                              
-                              if (scratchedTiles === 3) {
-                                  isGameComplete = true;
-                                  updateStats();
-                              }
-                          }
-                      }
-                  };
+                const scratchHandler = (e) => {
+                    if (!isScratched) {
+                        const scratchedPixels = handleScratch(e, tile, ctx, index);
+                        if (scratchedPixels > 50) {
+                            isScratched = true;
+                            scratchedTiles++;
+                            revealReward(index, ctx);
+                            
+                            if (scratchedTiles === 6) {
+                                isGameComplete = true;
+                                updateStats();
+                            }
+                        }
+                    }
+                };
 
-                  tile.addEventListener('mousemove', (e) => {
-                      if (e.buttons === 1) scratchHandler(e);
-                  });
+                tile.addEventListener('mousemove', (e) => {
+                    if (e.buttons === 1) scratchHandler(e);
+                });
 
-                  tile.addEventListener('touchmove', (e) => {
-                      e.preventDefault();
-                      scratchHandler(e);
-                  });
-              });
+                tile.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    scratchHandler(e);
+                });
+            });
 
-              function getScrathedPercentage(ctx) {
-                  const imageData = ctx.getImageData(0, 0, 40, 40);
-                  const pixels = imageData.data;
-                  let transparentPixels = 0;
+            function getScrathedPercentage(ctx) {
+                const imageData = ctx.getImageData(0, 0, 40, 40);
+                const pixels = imageData.data;
+                let transparentPixels = 0;
                 
-                  for (let i = 3; i < pixels.length; i += 4) {
-                      if (pixels[i] === 0) transparentPixels++;
-                  }
+                for (let i = 3; i < pixels.length; i += 4) {
+                    if (pixels[i] === 0) transparentPixels++;
+                }
                 
-                  return (transparentPixels / (40 * 40)) * 100;
-              }
+                return (transparentPixels / (40 * 40)) * 100;
+            }
 
-              function revealReward(index, ctx) {
-                  ctx.globalCompositeOperation = 'source-over';
-                  ctx.clearRect(0, 0, 40, 40);
-                  ctx.fillStyle = '#4CAF50';
-                  ctx.fillRect(0, 0, 40, 40);
-                  ctx.fillStyle = 'white';
-                  ctx.font = '12px Arial';
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillText(shuffledRewards[index] + ' PLN', 20, 20);
+            function revealReward(index, ctx) {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.clearRect(0, 0, 40, 40);
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(0, 0, 40, 40);
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(shuffledRewards[index] + ' PLN', 20, 20);
                 
-                  if (scratchedTiles <= 3) {
-                      totalWinnings += shuffledRewards[index];
-                  }
-              }
+                if (scratchedTiles <= 6) {
+                    totalWinnings += shuffledRewards[index];
+                }
+            }
 
-              function updateStats() {
-                  const totalWinningsElement = document.getElementById('total-winnings');
-                  const scratchedCountElement = document.getElementById('scratched-count');
-                
-                  if (totalWinningsElement) {
-                      totalWinningsElement.textContent = totalWinnings + ' PLN';
-                  }
-                  if (scratchedCountElement) {
-                      scratchedCountElement.textContent = scratchedTiles;
-                  }
-              }
-          });
-      </script>
-      <script type="module" src="dashboard.js"></script>
+            function updateStats() {
+                const totalWinningsElement = document.getElementById('total-winnings');
+                const scratchedCountElement = document.getElementById('scratched-count');
+            
+                if (totalWinningsElement) {
+                    totalWinningsElement.textContent = totalWinnings + ' PLN';
+                }
+                if (scratchedCountElement) {
+                    scratchedCountElement.textContent = scratchedTiles;
+                }
+            }
+        });
+    </script>
+    <script type="module" src="dashboard.js"></script>
 </body>
 </html>
