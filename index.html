@@ -46,6 +46,7 @@
             border-radius: 8px;
             box-shadow: inset 0 0 5px #999;
             cursor: pointer;
+            touch-action: none;
         }
     </style>
 </head>
@@ -104,12 +105,11 @@
       <script>
           document.addEventListener('DOMContentLoaded', () => {
               const tiles = document.querySelectorAll('.tile');
-              const rewards = [0, 0, 0, 5, 10, 20, 50, 100, 500]; // Reward values in PLN
+              const rewards = [0, 0, 0, 5, 10, 20, 50, 100, 500];
               let scratchedTiles = 0;
               let totalWinnings = 0;
               let isGameComplete = false;
 
-              // Shuffle rewards
               function shuffleArray(array) {
                   for (let i = array.length - 1; i > 0; i--) {
                       const j = Math.floor(Math.random() * (i + 1));
@@ -120,41 +120,50 @@
 
               const shuffledRewards = shuffleArray([...rewards]);
 
+              function handleScratch(e, tile, ctx, index) {
+                  if (isGameComplete) return;
+                  const rect = tile.getBoundingClientRect();
+                  const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                  const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+                  ctx.globalCompositeOperation = 'destination-out';
+                  ctx.beginPath();
+                  ctx.arc(x, y, 8, 0, Math.PI * 2);
+                  ctx.fill();
+
+                  return getScrathedPercentage(ctx);
+              }
+
               tiles.forEach((tile, index) => {
                   const ctx = tile.getContext('2d');
                   let isScratched = false;
 
-                  // Fill initial gray color
                   ctx.fillStyle = '#ccc';
                   ctx.fillRect(0, 0, 40, 40);
 
-                  // Add scratch effect
-                  tile.addEventListener('mousemove', (e) => {
-                      if (isGameComplete) return;
-                      if (e.buttons === 1) {
-                          const rect = tile.getBoundingClientRect();
-                          const x = e.clientX - rect.left;
-                          const y = e.clientY - rect.top;
-
-                          ctx.globalCompositeOperation = 'destination-out';
-                          ctx.beginPath();
-                          ctx.arc(x, y, 8, 0, Math.PI * 2);
-                          ctx.fill();
-
-                          if (!isScratched) {
-                              const scratchedPixels = getScrathedPercentage(ctx);
-                              if (scratchedPixels > 50) {
-                                  isScratched = true;
-                                  scratchedTiles++;
-                                  revealReward(index, ctx);
-                                
-                                  if (scratchedTiles === 3) {
-                                      isGameComplete = true;
-                                      updateStats();
-                                  }
+                  const scratchHandler = (e) => {
+                      if (!isScratched) {
+                          const scratchedPixels = handleScratch(e, tile, ctx, index);
+                          if (scratchedPixels > 50) {
+                              isScratched = true;
+                              scratchedTiles++;
+                              revealReward(index, ctx);
+                              
+                              if (scratchedTiles === 3) {
+                                  isGameComplete = true;
+                                  updateStats();
                               }
                           }
                       }
+                  };
+
+                  tile.addEventListener('mousemove', (e) => {
+                      if (e.buttons === 1) scratchHandler(e);
+                  });
+
+                  tile.addEventListener('touchmove', (e) => {
+                      e.preventDefault();
+                      scratchHandler(e);
                   });
               });
 
