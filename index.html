@@ -53,7 +53,7 @@
             width: 30px;
             height: 30px;
             background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" stroke="silver" stroke-width="8" fill="none"/></svg>');
-            position: absolute;
+            position: fixed;
             pointer-events: none;
             display: none;
             transform: translate(-50%, -50%);
@@ -123,6 +123,8 @@
             let totalWinnings = 0;
             let isGameComplete = false;
             let isScratching = false;
+            let lastX = 0;
+            let lastY = 0;
 
             function shuffleArray(array) {
                 for (let i = array.length - 1; i > 0; i--) {
@@ -135,16 +137,22 @@
             const shuffledRewards = shuffleArray([...rewards]);
 
             document.addEventListener('mousemove', (e) => {
+                lastX = e.clientX;
+                lastY = e.clientY;
                 if (isScratching) {
                     scratchCursor.style.display = 'block';
-                    scratchCursor.style.left = e.pageX + 'px';
-                    scratchCursor.style.top = e.pageY + 'px';
+                    scratchCursor.style.left = lastX + 'px';
+                    scratchCursor.style.top = lastY + 'px';
                 }
             });
 
-            document.addEventListener('mousedown', () => {
+            document.addEventListener('mousedown', (e) => {
                 isScratching = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
                 scratchCursor.style.display = 'block';
+                scratchCursor.style.left = lastX + 'px';
+                scratchCursor.style.top = lastY + 'px';
             });
 
             document.addEventListener('mouseup', () => {
@@ -155,15 +163,16 @@
             function handleScratch(e, tile, ctx, index) {
                 if (isGameComplete) return;
                 const rect = tile.getBoundingClientRect();
-                const x = (e.clientX || e.touches[0].clientX) - rect.left;
-                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                const x = (e.clientX || e.touches?.[0]?.clientX || lastX) - rect.left;
+                const y = (e.clientY || e.touches?.[0]?.clientY || lastY) - rect.top;
+
+                if (x < 0 || x > tile.width || y < 0 || y > tile.height) return 0;
 
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.beginPath();
                 ctx.arc(x, y, 8, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Add scratch effect particles
                 for (let i = 0; i < 5; i++) {
                     const angle = Math.random() * Math.PI * 2;
                     const radius = Math.random() * 5;
@@ -202,7 +211,11 @@
                 };
 
                 tile.addEventListener('mousemove', (e) => {
-                    if (e.buttons === 1) scratchHandler(e);
+                    if (isScratching) scratchHandler(e);
+                });
+
+                tile.addEventListener('mousedown', (e) => {
+                    if (!isScratched) scratchHandler(e);
                 });
 
                 tile.addEventListener('touchmove', (e) => {
