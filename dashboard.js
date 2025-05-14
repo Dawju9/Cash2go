@@ -1,103 +1,224 @@
-const dashboardContainer = document.getElementById("dashboard-container");
-const statsContainer = document.getElementById("stats-container");
-const qrScannerContainer = document.getElementById("qr-scanner-container");
-const actionsContainer = document.getElementById("actions");
 
-const totalScratchersElement = document.getElementById("total-scratchers");
-const scratchedCountElement = document.getElementById("scratched-count");
-const totalWinningsElement = document.getElementById("total-winnings");
-const pendingPayoutsElement = document.getElementById("pending-payouts");
+// scratchcard.js
+class ScratchCard {
+    constructor(container, options = {}) {
+        this.container = container;
+        this.options = {
+            width: options.width || 320,
+            height: options.height || 160,
+            gridSize: options.gridSize || 12,
+            rewards: options.rewards || [0, 0, 0, 5, 10, 20, 50, 100, 500],
+            requiredScratched: options.requiredScratched || 6
+        };
 
-const generateReportButton = document.getElementById("generate-report");
-const refreshStatsButton = document.getElementById("refresh-stats");
-const scratcherResultElement = document.getElementById("scratcher-result");
-const qrReader = document.getElementById("qr-reader");
-const salesChartCanvas = document.getElementById("sales-chart");
-const winningsChartCanvas = document.getElementById("winnings-chart");
+        this.state = {
+            scratchedTiles: 0,
+            totalWinnings: 0,
+            isGameComplete: false,
+            isScratching: false,
+            lastX: 0,
+            lastY: 0
+        };
 
-let totalScratchers = 0;
-let scratchedCount = 0;
-let totalWinnings = 0;
-let pendingPayouts = 0;
+        this.init();
+    }
 
-function updateDashboardStats() {
-    totalScratchersElement.textContent = totalScratchers;
-    scratchedCountElement.textContent = scratchedCount;
-    totalWinningsElement.textContent = `${totalWinnings} PLN`;
-    pendingPayoutsElement.textContent = `${pendingPayouts} PLN`;
+    init() {
+        this.createScratchCard();
+        this.setupCursor();
+        this.setupEventListeners();
+        this.shuffledRewards = this.shuffleArray([...this.options.rewards]);
+    }
+
+    createScratchCard() {
+        this.scratchCard = document.createElement('div');
+        this.scratchCard.className = 'scratch-card';
+        
+        this.tilesContainer = document.createElement('div');
+        this.tilesContainer.className = 'tiles';
+        
+        this.tiles = Array(this.options.gridSize).fill().map(() => {
+            const canvas = document.createElement('canvas');
+            canvas.className = 'tile';
+            canvas.width = 40;
+            canvas.height = 40;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ccc';
+            ctx.fillRect(0, 0, 40, 40);
+            return canvas;
+        });
+
+        this.tiles.forEach(tile => this.tilesContainer.appendChild(tile));
+        this.scratchCard.appendChild(this.tilesContainer);
+        this.container.appendChild(this.scratchCard);
+    }
+
+    setupCursor() {
+        this.cursor = document.createElement('div');
+        this.cursor.id = 'scratch-cursor';
+        this.scratchCard.appendChild(this.cursor);
+    }
+
+    setupEventListeners() {
+        document.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        document.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        document.addEventListener('mouseup', () => this.handleMouseUp());
+
+        this.tiles.forEach((tile, index) => {
+            const ctx = tile.getContext('2d');
+            let isScratched = false;
+
+            const scratchHandler = (e) => {
+                if (!isScratched && this.state.isScratching) {
+                    const scratchedPixels = this.handleScratch(e, tile, ctx, index);
+                    if (scratchedPixels > 50) {
+                        isScratched = true;
+                        this.state.scratchedTiles++;
+                        this.revealReward(index, ctx);
+                        
+                        if (this.state.scratchedTiles === this.options.requiredScratched) {
+                            this.state.isGameComplete = true;
+                            this.updateStats();
+                        }
+                    }
+                }
+            };
+
+            tile.addEventListener('mousemove', (e) => {
+                if (this.state.isScratching) scratchHandler(e);
+            });
+
+            tile.addEventListener('mousedown', (e) => {
+                if (!isScratched) scratchHandler(e);
+            });
+
+            tile.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                scratchHandler(e);
+            });
+        });
+    }
+
+    handleMouseMove(e) {
+        this.state.lastX = e.clientX;
+        this.state.lastY = e.clientY;
+        if (this.state.isScratching) {
+            this.cursor.style.display = 'block';
+            this.cursor.style.left = this.state.lastX + 'px';
+            this.cursor.style.top = this.state.lastY + 'px';
+        }
+    }
+
+    handleMouseDown(e) {
+        this.state.isScratching = true;
+        this.state.lastX = e.clientX;
+        this.state.lastY = e.clientY;
+        this.cursor.style.display = 'block';
+        this.cursor.style.left = this.state.lastX + 'px';
+        this.cursor.style.top = this.state.lastY + 'px';
+    }
+
+    handleMouseUp() {
+        this.state.isScratching = false;
+        this.cursor.style.display = 'none';
+    }
+
+    handleScratch(e, tile, ctx, index) {
+        if (this.state.isGameComplete) return;
+        const rect = tile.getBoundingClientRect();
+        const x = (e.clientX || e.touches?.[0]?.clientX || this.state.lastX) - rect.left;
+        const y = (e.clientY || e.touches?.[0]?.clientY || this.state.lastY) - rect.top;
+
+        if (x < 0 || x > tile.width || y < 0 || y > tile.height) return 0;
+
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        this.createScratchParticles(ctx, x, y);
+        return this.getScrathedPercentage(ctx);
+    }
+
+    createScratchParticles(ctx, x, y) {
+        for (let i = 0; i < 5; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = Math.random() * 5;
+            const particleX = x + Math.cos(angle) * radius;
+            const particleY = y + Math.sin(angle) * radius;
+            
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    getScrathedPercentage(ctx) {
+        const imageData = ctx.getImageData(0, 0, 40, 40);
+        const pixels = imageData.data;
+        let transparentPixels = 0;
+        
+        for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] === 0) transparentPixels++;
+        }
+        
+        return (transparentPixels / (40 * 40)) * 100;
+    }
+
+    revealReward(index, ctx) {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.clearRect(0, 0, 40, 40);
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(0, 0, 40, 40);
+        ctx.fillStyle = 'white';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.shuffledRewards[index] + ' PLN', 20, 20);
+        
+        if (this.state.scratchedTiles <= this.options.requiredScratched) {
+            this.state.totalWinnings += this.shuffledRewards[index];
+        }
+    }
+
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    updateStats() {
+        const event = new CustomEvent('scratchcard:complete', {
+            detail: {
+                totalWinnings: this.state.totalWinnings,
+                scratchedTiles: this.state.scratchedTiles
+            }
+        });
+        this.container.dispatchEvent(event);
+    }
+
+    reset() {
+        this.container.innerHTML = '';
+        this.state = {
+            scratchedTiles: 0,
+            totalWinnings: 0,
+            isGameComplete: false,
+            isScratching: false,
+            lastX: 0,
+            lastY: 0
+        };
+        this.init();
+    }
 }
 
-generateReportButton.addEventListener('click', () => {
-    const report = {
-        totalScratchers,
-        scratchedCount,
-        totalWinnings,
-        pendingPayouts,
-        timestamp: new Date().toISOString()
-    };
-    console.log('Generated Report:', report);
-    // Here you would typically send this to a server or generate a PDF
-});
-
-refreshStatsButton.addEventListener('click', () => {
-    // Simulate fetching updated stats from server
-    totalScratchers += Math.floor(Math.random() * 10);
-    updateDashboardStats();
-});
-
-// Initialize sales chart
-const salesChart = new Chart(
-    salesChartCanvas.getContext('2d'),
-    {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            datasets: [{
-                label: 'Scratchers Sold',
-                data: [65, 59, 80, 81, 56, 55],
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1
-            }]
-        }
-    }
-);
-
-// Initialize winnings chart
-const winningsChart = new Chart(
-    winningsChartCanvas.getContext('2d'),
-    {
-        type: 'bar',
-        data: {
-            labels: ['5 PLN', '10 PLN', '50 PLN', '100 PLN'],
-            datasets: [{
-                label: 'Prize Distribution',
-                data: [30, 20, 10, 5],
-                backgroundColor: [
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgb(75, 192, 192)',
-                    'rgb(54, 162, 235)',
-                    'rgb(153, 102, 255)',
-                    'rgb(255, 159, 64)'
-                ],
-                borderWidth: 1
-            }]
-        }
-    }
-);
-
-// Initialize QR scanner
-const html5QrcodeScanner = new Html5QrcodeScanner(
-    qrReader.id, { fps: 10, qrbox: 250 }
-);
-
-html5QrcodeScanner.render((decodedText) => {
-    scratcherResultElement.innerHTML = `Scanned Scratcher ID: ${decodedText}`;
-});
-
-// Initial stats update
-updateDashboardStats();
+// Usage:
+// const container = document.querySelector('.scratch-card-container');
+// const scratchCard = new ScratchCard(container, {
+//     rewards: [0, 0, 0, 5, 10, 20, 50, 100, 500],
+//     requiredScratched: 6
+// });
+// container.addEventListener('scratchcard:complete', (e) => {
+//     console.log('Game completed!', e.detail);
+// });
