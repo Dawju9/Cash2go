@@ -23,6 +23,22 @@
             margin: 20px;
             display: inline-block;
         }
+        .scratch-card {
+            width: 320px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        .tiles {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .tile {
+            background-color: #ccc;
+            border-radius: 8px;
+            box-shadow: inset 0 0 5px #999;
+            cursor: pointer;
+        }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
@@ -30,36 +46,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
         body {
             font-family: 'Montserrat', sans-serif;
-        }
-        .scratch-area {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            border-radius: 0.375rem;
-            overflow: hidden;
-            cursor: pointer;
-            user-select: none;
-            background-color: #9ca3af;
-        }
-        .scratch-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 40px;
-            height: 40px;
-            border-radius: 0.375rem;
-            background-color: #9ca3af;
-            z-index: 10;
-        }
-        .scratch-icon {
-            position: absolute;
-            top: 6px;
-            left: 6px;
-            font-size: 18px;
-            color: #6b7280;
-            pointer-events: none;
-            user-select: none;
-            z-index: 5;
         }
     </style>
 </head>
@@ -97,149 +83,162 @@
         <div class="text-gray-600 font-semibold text-lg leading-tight text-left w-28 select-none">
             SCRATCH<br />CARD
         </div>
-        <div class="grid grid-cols-3 gap-4 w-[140px]">
-            <div class="scratch-area" id="scratch1" aria-label="Scratch card with dollar sign icon">
-                <canvas class="scratch-canvas" width="40" height="40"></canvas>
-                <i class="fas fa-dollar-sign scratch-icon"></i>
+        <div class="scratch-card">
+            <div class="tiles">
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
+                <canvas class="tile" width="40" height="40"></canvas>
             </div>
-            <div class="w-10 h-10 bg-gray-400 rounded-md select-none"></div>
-            <div class="w-10 h-10 bg-gray-400 rounded-md select-none"></div>
-            <div class="w-10 h-10 bg-gray-400 rounded-md select-none"></div>
-            <div class="w-10 h-10 bg-gray-400 rounded-md select-none"></div>
-            <div class="w-10 h-10 bg-gray-400 rounded-md select-none"></div>
-            <div class="w-10 h-10 bg-gray-400 rounded-md select-none"></div>
-            <div class="w-10 h-10 bg-gray-400 rounded-md select-none"></div>
-            <div class="w-10 h-10 bg-gray-400 rounded-md select-none"></div>
         </div>
     </div>
 
     <script>
-        const scratchCard = document.getElementById('scratch1');
-        const scratchCanvas = scratchCard.querySelector('canvas');
-        const context = scratchCanvas.getContext('2d');
-        const canvasWidth = scratchCanvas.width;
-        const canvasHeight = scratchCanvas.height;
+        const prizePool = [
+            { value: 0, chance: 0.5 },
+            { value: 5, chance: 0.2 },
+            { value: 10, chance: 0.15 },
+            { value: 50, chance: 0.1 },
+            { value: 100, chance: 0.05 },
+        ];
 
-        context.fillStyle = '#9ca3af';
-        context.fillRect(0, 0, canvasWidth, canvasHeight);
-        context.globalCompositeOperation = 'destination-out';
-
-        let drawing = false;
-        const previousPoints = [];
-
-        function getPointerPosition(event) {
-            const rect = scratchCanvas.getBoundingClientRect();
-            let x, y;
-            if (event.touches) {
-                x = event.touches[0].clientX - rect.left;
-                y = event.touches[0].clientY - rect.top;
-            } else {
-                x = event.clientX - rect.left;
-                y = event.clientY - rect.top;
+        function pickPrize() {
+            const rand = Math.random();
+            let acc = 0;
+            for (const prize of prizePool) {
+                acc += prize.chance;
+                if (rand < acc) return prize.value;
             }
-            return { x, y };
+            return 0;
         }
 
-        function drawLine(start, end) {
-            context.lineCap = 'round';
-            context.lineJoin = 'round';
-            context.lineWidth = 10;
-            context.beginPath();
-            context.moveTo(start.x, start.y);
-            context.lineTo(end.x, end.y);
-            context.stroke();
-        }
+        document.querySelectorAll('.tile').forEach(tile => {
+            const ctx = tile.getContext('2d');
+            ctx.fillStyle = "#9ca3af";
+            ctx.fillRect(0, 0, tile.width, tile.height);
+            
+            const prize = pickPrize();
+            tile.dataset.prize = prize;
 
-        function startDrawing(event) {
-            event.preventDefault();
-            drawing = true;
-            previousPoints.length = 0;
-            previousPoints.push(getPointerPosition(event));
-        }
+            let drawing = false;
+            const previousPoints = [];
 
-        function continueDrawing(event) {
-            event.preventDefault();
-            if (!drawing) return;
-            const currentPoint = getPointerPosition(event);
-            for (let i = 0; i < previousPoints.length; i++) {
-                drawLine(previousPoints[i], currentPoint);
-            }
-            previousPoints.push(currentPoint);
-            checkScratchCompletion();
-        }
-
-        function stopDrawing(event) {
-            event.preventDefault();
-            drawing = false;
-            checkScratchCompletion();
-        }
-
-        function checkScratchCompletion() {
-            const imageData = context.getImageData(0, 0, canvasWidth, canvasHeight);
-            let transparentPixels = 0;
-            for (let i = 3; i < imageData.data.length; i += 4) {
-                if (imageData.data[i] === 0) {
-                    transparentPixels++;
-                }
-            }
-            const scratchedPercentage = (transparentPixels / (canvasWidth * canvasHeight)) * 100;
-            if (scratchedPercentage > 60) {
-                revealReward();
-            }
-        }
-
-        function revealReward() {
-            scratchCanvas.removeEventListener('mousedown', startDrawing);
-            scratchCanvas.removeEventListener('touchstart', startDrawing);
-            scratchCanvas.removeEventListener('mousemove', continueDrawing);
-            scratchCanvas.removeEventListener('touchmove', continueDrawing);
-            scratchCanvas.removeEventListener('mouseup', stopDrawing);
-            scratchCanvas.removeEventListener('touchend', stopDrawing);
-            scratchCanvas.removeEventListener('mouseleave', stopDrawing);
-
-            context.clearRect(0, 0, canvasWidth, canvasHeight);
-
-            let flashCount = 0;
-            const maxFlashes = 6;
-            const icon = scratchCard.querySelector('.scratch-icon');
-            const flashInterval = setInterval(() => {
-                if (flashCount % 2 === 0) {
-                    scratchCard.style.backgroundColor = '#10b981';
-                    icon.style.color = 'white';
+            function getPointerPosition(event) {
+                const rect = tile.getBoundingClientRect();
+                let x, y;
+                if (event.touches) {
+                    x = event.touches[0].clientX - rect.left;
+                    y = event.touches[0].clientY - rect.top;
                 } else {
-                    scratchCard.style.backgroundColor = '#6b7280';
-                    icon.style.color = '#d1d5db';
+                    x = event.clientX - rect.left;
+                    y = event.clientY - rect.top;
                 }
-                flashCount++;
-                if (flashCount > maxFlashes) {
-                    clearInterval(flashInterval);
-                    scratchCard.style.backgroundColor = '#10b981';
-                    icon.style.color = 'white';
-                    showRewardText();
-                    updateAccountAndRewards();
+                return { x, y };
+            }
+
+            function drawLine(start, end) {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                ctx.moveTo(start.x, start.y);
+                ctx.lineTo(end.x, end.y);
+                ctx.stroke();
+            }
+
+            function startDrawing(event) {
+                event.preventDefault();
+                drawing = true;
+                previousPoints.length = 0;
+                previousPoints.push(getPointerPosition(event));
+            }
+
+            function continueDrawing(event) {
+                event.preventDefault();
+                if (!drawing) return;
+                const currentPoint = getPointerPosition(event);
+                for (let i = 0; i < previousPoints.length; i++) {
+                    drawLine(previousPoints[i], currentPoint);
                 }
-            }, 300);
-        }
+                previousPoints.push(currentPoint);
+                checkScratchCompletion();
+            }
 
-        function showRewardText() {
-            const rewardText = document.createElement('div');
-            rewardText.textContent = 'WIN $100';
-            rewardText.className = 'absolute inset-0 flex items-center justify-center text-white font-bold text-xs select-none';
-            scratchCard.appendChild(rewardText);
-        }
+            function stopDrawing(event) {
+                event.preventDefault();
+                drawing = false;
+                checkScratchCompletion();
+            }
 
-        function updateAccountAndRewards() {
+            function checkScratchCompletion() {
+                const imageData = ctx.getImageData(0, 0, tile.width, tile.height);
+                let transparentPixels = 0;
+                for (let i = 3; i < imageData.data.length; i += 4) {
+                    if (imageData.data[i] === 0) {
+                        transparentPixels++;
+                    }
+                }
+                const scratchedPercentage = (transparentPixels / (tile.width * tile.height)) * 100;
+                if (scratchedPercentage > 60) {
+                    revealPrize();
+                }
+            }
+
+            function revealPrize() {
+                tile.removeEventListener('mousedown', startDrawing);
+                tile.removeEventListener('touchstart', startDrawing);
+                tile.removeEventListener('mousemove', continueDrawing);
+                tile.removeEventListener('touchmove', continueDrawing);
+                tile.removeEventListener('mouseup', stopDrawing);
+                tile.removeEventListener('touchend', stopDrawing);
+                tile.removeEventListener('mouseleave', stopDrawing);
+
+                ctx.clearRect(0, 0, tile.width, tile.height);
+                ctx.globalCompositeOperation = 'source-over';
+                
+                if (prize > 0) {
+                    tile.style.backgroundColor = '#10b981';
+                    ctx.fillStyle = 'white';
+                } else {
+                    tile.style.backgroundColor = '#6b7280';
+                    ctx.fillStyle = '#d1d5db';
+                }
+                
+                ctx.font = '12px Montserrat';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`${prize} PLN`, tile.width/2, tile.height/2);
+                
+                updateAccountAndRewards(prize);
+            }
+
+            tile.addEventListener('mousedown', startDrawing);
+            tile.addEventListener('touchstart', startDrawing, { passive: false });
+            tile.addEventListener('mousemove', continueDrawing);
+            tile.addEventListener('touchmove', continueDrawing, { passive: false });
+            tile.addEventListener('mouseup', stopDrawing);
+            tile.addEventListener('touchend', stopDrawing);
+            tile.addEventListener('mouseleave', stopDrawing);
+        });
+
+        function updateAccountAndRewards(prize) {
             const scratchedCountElement = document.getElementById('scratched-count');
             const totalWinningsElement = document.getElementById('total-winnings');
 
             let scratchedCount = parseInt(scratchedCountElement.textContent, 10);
             scratchedCountElement.textContent = scratchedCount + 1;
 
-            let totalWinnings = parseInt(totalWinningsElement.textContent, 10);
-            totalWinningsElement.textContent = `${totalWinnings + 100} PLN`;
+            if (prize > 0) {
+                let totalWinnings = parseInt(totalWinningsElement.textContent, 10);
+                totalWinningsElement.textContent = `${totalWinnings + prize} PLN`;
+            }
         }
-
-        scratchCanvas.addEventListener('mousedown', startDrawing);
-        scratchCanvas.addEventListener('touchstart', startDrawing, { passive: false });
-        scratchCanvas.addEventListener('mousemove', continueDrawing);
-
+    </script>
+</body>
+</html>
