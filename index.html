@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cash2go Scratchers Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
         .result-card {
             padding: 20px;
             margin: 10px;
@@ -40,16 +48,6 @@
             cursor: pointer;
         }
     </style>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap');
-        body {
-            font-family: 'Montserrat', sans-serif;
-        }
-    </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400 flex items-center justify-center p-6">
     <div id="dashboard-container">
@@ -61,7 +59,7 @@
             <div>Total Winnings: <span id="total-winnings">0 PLN</span></div>
             <div>Pending Payouts: <span id="pending-payouts">0 PLN</span></div>
         </div>
-
+    <Section>
         <div id="qr-scanner-container">
             <h2>Scan Scratcher QR Code</h2>
             <div id="qr-reader"></div>
@@ -79,26 +77,128 @@
             <button id="generate-report">Generate Report</button>
             <button id="refresh-stats">Refresh Stats</button>
         </div>
+    </Section>
+        <div id="results-container">
+            <h2>Scratch Results</h2>
+            <div id="results-list"></div>
+        </div>
     </div>
+      <div class="bg-white shadow-lg w-[360px] h-[160px] rounded-sm flex items-center justify-between p-8">
+          <div class="text-gray-600 font-semibold text-lg leading-tight text-left w-28 select-none">
+              SCRATCH<br />CARD
+          </div>
+          <div class="scratch-card">
+              <div class="tiles">
+                  <canvas class="tile" width="40" height="40"></canvas>
+                  <canvas class="tile" width="40" height="40"></canvas>
+                  <canvas class="tile" width="40" height="40"></canvas>
+                  <canvas class="tile" width="40" height="40"></canvas>
+                  <canvas class="tile" width="40" height="40"></canvas>
+                  <canvas class="tile" width="40" height="40"></canvas>
+                  <canvas class="tile" width="40" height="40"></canvas>
+                  <canvas class="tile" width="40" height="40"></canvas>
+                  <canvas class="tile" width="40" height="40"></canvas>
+              </div>
+          </div>
+      </div>
+      <script>
+          document.addEventListener('DOMContentLoaded', () => {
+              const tiles = document.querySelectorAll('.tile');
+              const rewards = [0, 0, 0, 5, 10, 20, 50, 100, 500]; // Reward values in PLN
+              let scratchedTiles = 0;
+              let totalWinnings = 0;
+              let isGameComplete = false;
 
-    <div class="bg-white shadow-lg w-[360px] h-[160px] rounded-sm flex items-center justify-between p-8">
-        <div class="text-gray-600 font-semibold text-lg leading-tight text-left w-28 select-none">
-            SCRATCH<br />CARD
-        </div>
-        <div class="scratch-card">
-            <div class="tiles">
-                <canvas class="tile" width="40" height="40"></canvas>
-                <canvas class="tile" width="40" height="40"></canvas>
-                <canvas class="tile" width="40" height="40"></canvas>
-                <canvas class="tile" width="40" height="40"></canvas>
-                <canvas class="tile" width="40" height="40"></canvas>
-                <canvas class="tile" width="40" height="40"></canvas>
-                <canvas class="tile" width="40" height="40"></canvas>
-                <canvas class="tile" width="40" height="40"></canvas>
-                <canvas class="tile" width="40" height="40"></canvas>
-            </div>
-        </div>
-    </div>
-    <script type="module" src="dashboard.js"></script>
+              // Shuffle rewards
+              function shuffleArray(array) {
+                  for (let i = array.length - 1; i > 0; i--) {
+                      const j = Math.floor(Math.random() * (i + 1));
+                      [array[i], array[j]] = [array[j], array[i]];
+                  }
+                  return array;
+              }
+
+              const shuffledRewards = shuffleArray([...rewards]);
+
+              tiles.forEach((tile, index) => {
+                  const ctx = tile.getContext('2d');
+                  let isScratched = false;
+
+                  // Fill initial gray color
+                  ctx.fillStyle = '#ccc';
+                  ctx.fillRect(0, 0, 40, 40);
+
+                  // Add scratch effect
+                  tile.addEventListener('mousemove', (e) => {
+                      if (isGameComplete) return;
+                      if (e.buttons === 1) {
+                          const rect = tile.getBoundingClientRect();
+                          const x = e.clientX - rect.left;
+                          const y = e.clientY - rect.top;
+
+                          ctx.globalCompositeOperation = 'destination-out';
+                          ctx.beginPath();
+                          ctx.arc(x, y, 8, 0, Math.PI * 2);
+                          ctx.fill();
+
+                          if (!isScratched) {
+                              const scratchedPixels = getScrathedPercentage(ctx);
+                              if (scratchedPixels > 50) {
+                                  isScratched = true;
+                                  scratchedTiles++;
+                                  revealReward(index, ctx);
+                                
+                                  if (scratchedTiles === 3) {
+                                      isGameComplete = true;
+                                      updateStats();
+                                  }
+                              }
+                          }
+                      }
+                  });
+              });
+
+              function getScrathedPercentage(ctx) {
+                  const imageData = ctx.getImageData(0, 0, 40, 40);
+                  const pixels = imageData.data;
+                  let transparentPixels = 0;
+                
+                  for (let i = 3; i < pixels.length; i += 4) {
+                      if (pixels[i] === 0) transparentPixels++;
+                  }
+                
+                  return (transparentPixels / (40 * 40)) * 100;
+              }
+
+              function revealReward(index, ctx) {
+                  ctx.globalCompositeOperation = 'source-over';
+                  ctx.clearRect(0, 0, 40, 40);
+                  ctx.fillStyle = '#4CAF50';
+                  ctx.fillRect(0, 0, 40, 40);
+                  ctx.fillStyle = 'white';
+                  ctx.font = '12px Arial';
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillText(shuffledRewards[index] + ' PLN', 20, 20);
+                
+                  if (scratchedTiles <= 3) {
+                      totalWinnings += shuffledRewards[index];
+                  }
+              }
+
+              function updateStats() {
+                  const totalWinningsElement = document.getElementById('total-winnings');
+                  const scratchedCountElement = document.getElementById('scratched-count');
+                
+                  if (totalWinningsElement) {
+                      totalWinningsElement.textContent = totalWinnings + ' PLN';
+                  }
+                  if (scratchedCountElement) {
+                      scratchedCountElement.textContent = scratchedTiles;
+                  }
+              }
+          });
+      </script>
+      <script type="module" src="dashboard.js"></script>
 </body>
 </html>
