@@ -6,6 +6,12 @@ import QRScanner from 'html5-qrcode';
 import Chart from 'chart.js';
 
 class Dashboard {
+    /**
+     * Initializes the dashboard.
+     *
+     * @constructor
+     * @private
+     */
     constructor() {
         this.stats = {
             totalScratchers: 0,
