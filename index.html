@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cash2go Scratchers Dashboard</title>
+    <title>Panel Cash2go Zdrapki</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -52,17 +52,17 @@
 </head>
 <body class="min-h-screen bg-gradient-to-br from-gray-300 via-gray-200 to-gray-400 flex items-center justify-center p-6">
     <div id="dashboard-container">
-        <h1>Cash2go Scratchers Dashboard</h1>
+        <h1>Panel Cash2go Zdrapki</h1>
         
         <div id="stats-container">
-            <div>Total Scratchers: <span id="total-scratchers">0</span></div>
-            <div>Scratched Count: <span id="scratched-count">0</span></div>
-            <div>Total Winnings: <span id="total-winnings">0 PLN</span></div>
-            <div>Pending Payouts: <span id="pending-payouts">0 PLN</span></div>
+            <div>Wszystkie zdrapki: <span id="total-scratchers">0</span></div>
+            <div>Liczba zdrapanych: <span id="scratched-count">0</span></div>
+            <div>Suma wygranych: <span id="total-winnings">0 PLN</span></div>
+            <div>Oczekujące wypłaty: <span id="pending-payouts">0 PLN</span></div>
         </div>
     <Section>
         <div id="qr-scanner-container">
-            <h2>Scan Scratcher QR Code</h2>
+            <h2>Zeskanuj kod QR zdrapki</h2>
             <div id="qr-reader"></div>
             <div id="scratcher-result"></div>
         </div>
@@ -75,18 +75,18 @@
         </div>
 
         <div id="actions">
-            <button id="generate-report">Generate Report</button>
-            <button id="refresh-stats">Refresh Stats</button>
+            <button id="generate-report">Generuj raport</button>
+            <button id="refresh-stats">Odśwież statystyki</button>
         </div>
     </Section>
         <div id="results-container">
-            <h2>Scratch Results</h2>
+            <h2>Wyniki zdrapek</h2>
             <div id="results-list"></div>
         </div>
     </div>
       <div class="bg-white shadow-lg w-[360px] h-[160px] rounded-sm flex items-center justify-between p-8">
           <div class="text-gray-600 font-semibold text-lg leading-tight text-left w-28 select-none">
-              SCRATCH<br />CARD
+              ZDRAPKA
           </div>
           <div class="scratch-card">
               <div class="tiles">
