@@ -10,6 +10,10 @@ const pendingPayoutsElement = document.getElementById("pending-payouts");
 
 const generateReportButton = document.getElementById("generate-report");
 const refreshStatsButton = document.getElementById("refresh-stats");
+const scratcherResultElement = document.getElementById("scratcher-result");
+const qrReader = document.getElementById("qr-reader");
+const salesChartCanvas = document.getElementById("sales-chart");
+const winningsChartCanvas = document.getElementById("winnings-chart");
 
 let totalScratchers = 0;
 let scratchedCount = 0;
@@ -43,7 +47,7 @@ refreshStatsButton.addEventListener('click', () => {
 
 // Initialize sales chart
 const salesChart = new Chart(
-    document.getElementById('sales-chart').getContext('2d'),
+    salesChartCanvas.getContext('2d'),
     {
         type: 'line',
         data: {
@@ -60,7 +64,7 @@ const salesChart = new Chart(
 
 // Initialize winnings chart
 const winningsChart = new Chart(
-    document.getElementById('winnings-chart').getContext('2d'),
+    winningsChartCanvas.getContext('2d'),
     {
         type: 'bar',
         data: {
@@ -88,12 +92,11 @@ const winningsChart = new Chart(
 
 // Initialize QR scanner
 const html5QrcodeScanner = new Html5QrcodeScanner(
-    "qr-reader", { fps: 10, qrbox: 250 }
+    qrReader.id, { fps: 10, qrbox: 250 }
 );
 
 html5QrcodeScanner.render((decodedText) => {
-    document.getElementById('scratcher-result').innerHTML = 
-        `Scanned Scratcher ID: ${decodedText}`;
+    scratcherResultElement.innerHTML = `Scanned Scratcher ID: ${decodedText}`;
 });
 
 // Initial stats update
