@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const balanceDisplay = document.getElementById('balance');
     const sendMoneyButton = document.getElementById('sendMoney');
     const requestMoneyButton = document.getElementById('requestMoney');
+    
 
     let balance = 0;
 
