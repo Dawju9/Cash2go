@@ -15,6 +15,78 @@ Każda zdrapka posiada unikalny kod QR ukryty pod losowaniem, który pozwala na:
 
 Po zakupie zdrapki i odsłonięciu losu możliwe jest odkrycie zwycięskich liczb oraz sumy wygranej. Dzięki temu system Cash2go zapewnia kompleksową kontrolę nad procesem loterii zdrapek - od generowania, przez sprzedaż, aż po rozliczanie i analizowanie wyników.
 
+
+
+/my-project-github-pages
+├── index.html
+├── assets/
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   └── script.js
+│   └── img/
+│       └── logo.png
+├── about.html
+├── contact.html
+├── 404.html
+└── README.md
+
+
+
+
+```js
+// script.js
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Dynamiczne wstawianie roku w stopce
+  const yearSpan = document.getElementById("year");
+  if (yearSpan) {
+    yearSpan.textContent = new Date().getFullYear();
+  }
+
+  // Przełączanie motywu (ciemny / jasny)
+  const toggleThemeBtn = document.getElementById("toggle-theme");
+  if (toggleThemeBtn) {
+    toggleThemeBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-theme");
+    });
+  }
+
+  // Prosta nawigacja (opcjonalnie AJAX lub hash routing)
+  // ... np. podstrony wczytywane do div#content
+
+});
+```
+
+
+
+```HTML
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moja Strona</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Witaj na mojej stronie</h1>
+    <button id="toggle-theme">Zmień motyw</button>
+  </header>
+
+  <main id="content">
+    <p>To jest główna zawartość.</p>
+  </main>
+
+  <footer>
+    <p>&copy; <span id="year"></span> Whitekali</p>
+  </footer>
+
+  <script src="assets/js/script.js"></script>
+</body>
+</html>
+```
 ---
 
 ## Główne funkcjonalności
