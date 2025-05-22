@@ -9,7 +9,7 @@ The system provides a comprehensive solution for lottery management, from genera
 ## Key Features
 
 * **Scratch-off Generation**
-	+ Generates scratch-offs with masked prizes using NLG.
+	+ Generates scratch-offs with masked prizes using NLG. 
 * **Scratch-off Management**
 	+ Manages scratch-offs, including registration, tracking, and analysis.
 * **QR Code Scanning**
